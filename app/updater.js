@@ -1,75 +1,81 @@
-import request, { get } from 'request';
+import os from 'node:os';
+
+import semver from 'semver';
+
+import request from 'request';
 import { basename, join, dirname, extname, resolve } from 'path';
-import { tmpdir } from 'os';
 import { unlink, createWriteStream, existsSync, mkdirSync, exists as _exists, chmodSync } from 'fs';
-import { exec } from 'child_process';
-import { spawn } from 'child_process';
+import { exec, spawn } from 'child_process';
 import ncp from 'ncp';
 import del from 'del';
-import { gt } from 'semver';
 
 var platform = process.platform;
 platform = /^win/.test(platform) ? 'win' : /^darwin/.test(platform) ? 'mac' : 'linux' + (process.arch == 'ia32' ? '32' : '64');
 
+/**
+ * @typedef {object} Platform
+ * @property {string} url - The URL to the package
+ * @property {string} execPath - The path to the executable
+ */
 
 /**
- * Creates new instance of updater. Manifest could be a `package.json` of project.
- *
- * Note that compressed apps are assumed to be downloaded in the format produced by [node-webkit-builder](https://github.com/mllrsohn/node-webkit-builder) (or [grunt-node-webkit-builder](https://github.com/mllrsohn/grunt-node-webkit-builder)).
- *
- * @constructor
- * @param {object} manifest - See the [manifest schema](#manifest-schema) below.
- * @param {object} options - Optional
- * @property {string} options.temporaryDirectory - (Optional) path to a directory to download the updates to and unpack them in. Defaults to [`os.tmpdir()`](https://nodejs.org/api/os.html#os_os_tmpdir)
+ * @typedef {object} Packages
+ * @property {Platform} win - The Windows package
+ * @property {Platform} mac - The macOS package
+ * @property {Platform} linux32 - The Linux 32-bit package
+ * @property {Platform} linux64 - The Linux 64-bit package
  */
+
+/**
+ * @typedef {object} Manifest
+ * @property {string} name - The name of the application
+ * @property {string} version - The current version of the application
+ * @property {string} manifestUrl - The URL to the remote manifest file
+ * @property {Packages} packages - The packages for the application
+ */
+
+/**
+ * @typedef {object} UpdaterOptions
+ * @property {string} temporaryDirectory - The path to a directory to download the updates to and unpack them in. Defaults to [`os.tmpdir()`](https://nodejs.org/api/os.html#os_os_tmpdir)
+ */
+
 class updater {
+
+  /**
+   * Creates new instance of updater.
+   * 
+   * @constructor
+   * @param {Manifest} manifest - See the [manifest schema](https://github.com/nwutils/nw-updater?tab=readme-ov-file#manifest-schema).
+   * @param {UpdaterOptions} options - Optional
+   */
   constructor(manifest, options) {
     this.manifest = manifest;
     this.options = {
-      temporaryDirectory: options && options.temporaryDirectory || tmpdir()
+      temporaryDirectory: options && options.temporaryDirectory || os.tmpdir()
     };
   }
+
   /**
-     * Will check the latest available version of the application by requesting the manifest specified in `manifestUrl`.
-     *
-     * The callback will always be called; the second parameter indicates whether or not there's a newer version.
-     * This function assumes you use [Semantic Versioning](http://semver.org) and enforces it; if your local version is `0.2.0` and the remote one is `0.1.23456` then the callback will be called with `false` as the second paramter. If on the off chance you don't use semantic versioning, you could manually download the remote manifest and call `download` if you're happy that the remote version is newer.
-     *
-     * @param {function} cb - Callback arguments: error, newerVersionExists (`Boolean`), remoteManifest
-     */
-  checkNewVersion(cb) {
-    get(this.manifest.manifestUrl, gotManifest.bind(this)); //get manifest from url
+   * Check the latest available version of the application by requesting the manifest specified in `manifestUrl`.
+   * 
+   * @async
+   * @method
+   * @returns {Promise.<boolean>}
+   */
+  async checkNewVersion() {
+    const response = await axios({
+      method: 'get',
+      url: this.manifest.manifestUrl,
+      responseType: 'json'
+    });
 
-    /**
-     * @private
-     */
-    function gotManifest(err, req, data) {
-      if (err) {
-        return cb(err);
-      }
-
-      if (req.statusCode < 200 || req.statusCode > 299) {
-        return cb(new Error(req.statusCode));
-      }
-
-      try {
-        data = JSON.parse(data);
-      } catch (e) {
-        return cb(e);
-      }
-
-      try {
-        cb(null, gt(data.version, this.manifest.version), data);
-      } catch (e) {
-        return cb(e);
-      }
-
-    }
+    return semver.gt(response.data.version, this.manifest.version);
   }
+
   /**
      * Downloads the new app to a template folder
      * @param  {Function} cb - called when download completes. Callback arguments: error, downloaded filepath
-     * @param  {Object} newManifest - see [manifest schema](#manifest-schema) below
+     * @param  {Manifest} newManifest - see [manifest schema](#manifest-schema) below
      * @return {Request} Request - stream, the stream contains `manifest` property with new manifest and 'content-length' property with the size of package.
      */
   download(cb, newManifest) {
