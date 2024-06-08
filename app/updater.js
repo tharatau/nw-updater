@@ -1,15 +1,17 @@
+import { exec, spawn } from 'node:child_process';
+import fs from 'node:fs';
 import os from 'node:os';
+import path from 'node:path';
+import process from 'node:process';
 
 import semver from 'semver';
 
-import request from 'request';
 import { basename, join, dirname, extname, resolve } from 'path';
-import { unlink, createWriteStream, existsSync, mkdirSync, exists as _exists, chmodSync } from 'fs';
-import { exec, spawn } from 'child_process';
+import { existsSync, mkdirSync, exists as _exists, chmodSync } from 'fs';
 import ncp from 'ncp';
 import del from 'del';
 
-var platform = process.platform;
+let platform = process.platform;
 platform = /^win/.test(platform) ? 'win' : /^darwin/.test(platform) ? 'mac' : 'linux' + (process.arch == 'ia32' ? '32' : '64');
 
 /**
@@ -73,74 +75,61 @@ class updater {
   }
 
   /**
-     * Downloads the new app to a template folder
-     * @param  {Function} cb - called when download completes. Callback arguments: error, downloaded filepath
-     * @param  {Manifest} newManifest - see [manifest schema](#manifest-schema) below
-     * @return {Request} Request - stream, the stream contains `manifest` property with new manifest and 'content-length' property with the size of package.
+     * Downloads the new app to a temorary folder.
+     * 
+     * @async
+     * @method
+     * @param {Manifest} newManifest - see [manifest schema](https://github.com/nwutils/nw-updater?tab=readme-ov-file#manifest-schema) below
+     * @returns {Promise.<void>}
      */
-  download(cb, newManifest) {
-    var manifest = newManifest || this.manifest;
-    var url = manifest.packages[platform].url;
-    var pkg = request(url, function (err, response) {
-      if (err) {
-        cb(err);
-      }
-      if (response && (response.statusCode < 200 || response.statusCode >= 300)) {
-        pkg.abort();
-        return cb(new Error(response.statusCode));
-      }
-    });
-    pkg.on('response', function (response) {
-      if (response && response.headers && response.headers['content-length']) {
-        pkg['content-length'] = response.headers['content-length'];
-      }
-    });
-    var filename = decodeURI(basename(url)), destinationPath = join(this.options.temporaryDirectory, filename);
-    // download the package to template folder
-    unlink(join(this.options.temporaryDirectory, filename), function () {
-      pkg.pipe(createWriteStream(destinationPath));
-      pkg.resume();
-    });
-    pkg.on('error', cb);
-    pkg.on('end', appDownloaded);
-    pkg.pause();
+  async download(newManifest) {
+    const manifest = newManifest ?? this.manifest;
+    const url = manifest.packages[platform].url;
+    const filename = decodeURI(path.basename(url))
+    const destinationPath = path.resolve(this.options.temporaryDirectory, filename);
 
-    function appDownloaded() {
-      process.nextTick(function () {
-        if (pkg.response.statusCode >= 200 && pkg.response.statusCode < 300) {
-          cb(null, destinationPath);
-        }
-      });
-    }
-    return pkg;
+    const writeStream = fs.createWriteStream(destinationPath);
+
+    const response = await axios({
+      method: "get",
+      url: url,
+      responseType: "stream"
+    });
+
+    await stream.promises.pipeline(response.data, writeStream);
   }
+
   /**
-     * Returns executed application path
-     * @returns {string}
-     */
+   * Returns executed application path.
+   * 
+   * @returns {string}
+   */
   getAppPath() {
-    var appPath = {
-      mac: join(process.cwd(), '../../..'),
-      win: dirname(process.execPath)
+    let appPath = {
+      mac: path.join(process.cwd(), '../../..'),
+      win: path.dirname(process.execPath)
     };
     appPath.linux32 = appPath.win;
     appPath.linux64 = appPath.win;
     return appPath[platform];
   }
+
   /**
-     * Returns current application executable
-     * @returns {string}
-     */
+   * Returns current application executable.
+   * 
+   * @returns {string}
+   */
   getAppExec() {
-    var execFolder = this.getAppPath();
-    var exec = {
+    let execFolder = this.getAppPath();
+    let exec = {
       mac: '',
-      win: basename(process.execPath),
-      linux32: basename(process.execPath),
-      linux64: basename(process.execPath)
+      win: path.basename(process.execPath),
+      linux32: path.basename(process.execPath),
+      linux64: path.basename(process.execPath)
     };
-    return join(execFolder, exec[platform]);
+    return path.join(execFolder, exec[platform]);
   }
+  
   /**
      * Will unpack the `filename` in temporary folder.
      * For Windows, [unzip](https://www.mkssoftware.com/docs/man1/unzip.1.asp) is used (which is [not signed](https://github.com/edjafarov/node-webkit-updater/issues/68)).
