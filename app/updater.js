@@ -91,9 +91,9 @@ class updater {
     const writeStream = fs.createWriteStream(destinationPath);
 
     const response = await axios({
-      method: "get",
+      method: 'get',
       url: url,
-      responseType: "stream"
+      responseType: 'stream'
     });
 
     await stream.promises.pipeline(response.data, writeStream);
@@ -129,7 +129,7 @@ class updater {
     };
     return path.join(execFolder, exec[platform]);
   }
-  
+
   /**
      * Will unpack the `filename` in temporary folder.
      * For Windows, [unzip](https://www.mkssoftware.com/docs/man1/unzip.1.asp) is used (which is [not signed](https://github.com/edjafarov/node-webkit-updater/issues/68)).
