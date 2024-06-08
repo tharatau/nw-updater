@@ -23,7 +23,8 @@
       "url": "https://github.com/nwutils/nw-updater/graphs/contributors"
     }
   ],
-  "main": "./app/updater.js",
+  "main": "./src/index.js",
+  "types": "./src/index.d.ts",
   "homepage": "https://github.com/nwutils/nw-updater",
   "repository": {
     "type": "git",
@@ -31,7 +32,8 @@
   },
   "scripts": {
     "deps": "npm i && cd app && npm i && cd ..",
-    "test": "node node_modules/grunt-cli/bin/grunt clean mochaTest"
+    "test": "node node_modules/grunt-cli/bin/grunt clean mochaTest",
+    "types": "npx -p typescript tsc app/updater.js --declaration --allowJs --emitDeclarationOnly --outFile ./src/index.d.ts"
   },
   "dependencies": {
     "ncp": "^2.0.0",

@@ -1,28 +1,28 @@
-  import request, { get } from 'request';
-  import { basename, join, dirname, extname, resolve } from 'path';
-  import { tmpdir } from 'os';
-  import { unlink, createWriteStream, existsSync, mkdirSync, exists as _exists, chmodSync } from 'fs';
-  import { exec } from 'child_process';
-  import { spawn } from 'child_process';
-  import ncp from 'ncp';
-  import del from 'del';
-  import { gt } from 'semver';
+import request, { get } from 'request';
+import { basename, join, dirname, extname, resolve } from 'path';
+import { tmpdir } from 'os';
+import { unlink, createWriteStream, existsSync, mkdirSync, exists as _exists, chmodSync } from 'fs';
+import { exec } from 'child_process';
+import { spawn } from 'child_process';
+import ncp from 'ncp';
+import del from 'del';
+import { gt } from 'semver';
 
-  var platform = process.platform;
-  platform = /^win/.test(platform)? 'win' : /^darwin/.test(platform)? 'mac' : 'linux' + (process.arch == 'ia32' ? '32' : '64');
+var platform = process.platform;
+platform = /^win/.test(platform) ? 'win' : /^darwin/.test(platform) ? 'mac' : 'linux' + (process.arch == 'ia32' ? '32' : '64');
 
 
-  /**
-   * Creates new instance of updater. Manifest could be a `package.json` of project.
-   *
-   * Note that compressed apps are assumed to be downloaded in the format produced by [node-webkit-builder](https://github.com/mllrsohn/node-webkit-builder) (or [grunt-node-webkit-builder](https://github.com/mllrsohn/grunt-node-webkit-builder)).
-   *
-   * @constructor
-   * @param {object} manifest - See the [manifest schema](#manifest-schema) below.
-   * @param {object} options - Optional
-   * @property {string} options.temporaryDirectory - (Optional) path to a directory to download the updates to and unpack them in. Defaults to [`os.tmpdir()`](https://nodejs.org/api/os.html#os_os_tmpdir)
-   */
-  class updater {
+/**
+ * Creates new instance of updater. Manifest could be a `package.json` of project.
+ *
+ * Note that compressed apps are assumed to be downloaded in the format produced by [node-webkit-builder](https://github.com/mllrsohn/node-webkit-builder) (or [grunt-node-webkit-builder](https://github.com/mllrsohn/grunt-node-webkit-builder)).
+ *
+ * @constructor
+ * @param {object} manifest - See the [manifest schema](#manifest-schema) below.
+ * @param {object} options - Optional
+ * @property {string} options.temporaryDirectory - (Optional) path to a directory to download the updates to and unpack them in. Defaults to [`os.tmpdir()`](https://nodejs.org/api/os.html#os_os_tmpdir)
+ */
+class updater {
   constructor(manifest, options) {
     this.manifest = manifest;
     this.options = {
@@ -39,9 +39,6 @@
      */
   checkNewVersion(cb) {
     get(this.manifest.manifestUrl, gotManifest.bind(this)); //get manifest from url
-
-
-
 
     /**
      * @private
@@ -182,253 +179,245 @@
   }
 }
 
-
-
-
-
-
-
-
-
+/**
+ * @private
+ * @param {string} zipPath
+ * @param {string} temporaryDirectory
+ * @return {string}
+ */
+var getZipDestinationDirectory = function (zipPath, temporaryDirectory) {
+  return join(temporaryDirectory, basename(zipPath, extname(zipPath)));
+},
 
   /**
    * @private
-   * @param {string} zipPath
-   * @param {string} temporaryDirectory
+   * @param {object} manifest
    * @return {string}
    */
-  var getZipDestinationDirectory = function(zipPath, temporaryDirectory){
-      return join(temporaryDirectory, basename(zipPath, extname(zipPath)));
-    },
-    /**
-     * @private
-     * @param {object} manifest
-     * @return {string}
-     */
-    getExecPathRelativeToPackage = function(manifest){
-      var execPath = manifest.packages[platform] && manifest.packages[platform].execPath;
+  getExecPathRelativeToPackage = function (manifest) {
+    var execPath = manifest.packages[platform] && manifest.packages[platform].execPath;
 
-      if(execPath){
-        return execPath;
-      }
-      else {
-        var suffix = {
-          win: '.exe',
-          mac: '.app'
-        };
-        return manifest.name + (suffix[platform] || '');
-      }
-    };
+    if (execPath) {
+      return execPath;
+    }
+    else {
+      var suffix = {
+        win: '.exe',
+        mac: '.app'
+      };
+      return manifest.name + (suffix[platform] || '');
+    }
+  };
 
 
-  var pUnpack = {
-    /**
-     * @private
-     */
-    mac: function(filename, cb, manifest, temporaryDirectory){
-      var args = arguments,
-        extension = extname(filename),
-        destination = join(temporaryDirectory, basename(filename, extension));
+var pUnpack = {
+  /**
+   * @private
+   */
+  mac: function (filename, cb, manifest, temporaryDirectory) {
+    var args = arguments,
+      extension = extname(filename),
+      destination = join(temporaryDirectory, basename(filename, extension));
 
-      if(!existsSync(destination)){
-        mkdirSync(destination);
-      }
+    if (!existsSync(destination)) {
+      mkdirSync(destination);
+    }
 
-      if(extension === ".zip"){
-        exec('unzip -xo "' + filename + '" >/dev/null',{ cwd: destination }, function(err){
-          if(err){
-            console.log(err);
-            return cb(err);
-          }
-          var appPath = join(destination, getExecPathRelativeToPackage(manifest));
-          cb(null, appPath);
-        })
-
-      }
-      else if(extension === ".dmg"){
-        // just in case if something was wrong during previous mount
-        exec('hdiutil unmount /Volumes/'+basename(filename, '.dmg'), function(err){
-          // create a CDR from the DMG to bypass any steps which require user interaction
-          var cdrPath = filename.replace(/.dmg$/, '.cdr');
-          exec('hdiutil convert "' + filename + '" -format UDTO -o "' + cdrPath + '"', function(err){
-            exec('hdiutil attach "' + cdrPath + '" -nobrowse', function(err){
-              if(err) {
-                if(err.code == 1){
-                  pUnpack.mac.apply(this, args);
-                }
-                return cb(err);
-              }
-              findMountPoint(basename(filename, '.dmg'), cb);
-            });
-          });
-        });
-
-        function findMountPoint(dmg_name, callback) {
-          exec('hdiutil info', function(err, stdout){
-            if (err) return callback(err);
-            var results = stdout.split("\n");
-            var dmgExp = new RegExp(dmg_name + '$');
-            for (var i=0,l=results.length;i<l;i++) {
-              if (results[i].match(dmgExp)) {
-                var mountPoint = results[i].split("\t").pop();
-                var fileToRun = join(mountPoint, dmg_name + ".app");
-                return callback(null, fileToRun);
-              }
-            }
-            callback(Error("Mount point not found"));
-          })
-        }
-      }
-    },
-    /**
-     * @private
-     */
-    win: function(filename, cb, manifest, temporaryDirectory){
-      var destinationDirectory = getZipDestinationDirectory(filename, temporaryDirectory),
-          unzip = function(){
-            // unzip by C. Spieler (docs: https://www.mkssoftware.com/docs/man1/unzip.1.asp, issues: http://www.info-zip.org/)
-            exec( '"' + resolve(__dirname, 'tools/unzip.exe') + '" -u -o "' +
-                filename + '" -d "' + destinationDirectory + '" > NUL', function(err){
-              if(err){
-                return cb(err);
-              }
-
-              cb(null, join(destinationDirectory, getExecPathRelativeToPackage(manifest)));
-            });
-          };
-
-      _exists(destinationDirectory, function(exists){
-        if(exists) {
-          del(destinationDirectory, {force: true}, function (err) {
-            if (err) {
-              cb(err);
-            }
-            else {
-              unzip();
-            }
-          });
-        }
-        else {
-          unzip();
-        }
-      });
-
-    },
-    /**
-     * @private
-     */
-    linux32: function(filename, cb, manifest, temporaryDirectory){
-      //filename fix
-      exec('tar -zxvf "' + filename + '" >/dev/null',{cwd: temporaryDirectory}, function(err){
-        console.log(arguments);
-        if(err){
+    if (extension === ".zip") {
+      exec('unzip -xo "' + filename + '" >/dev/null', { cwd: destination }, function (err) {
+        if (err) {
           console.log(err);
           return cb(err);
         }
-        cb(null,join(temporaryDirectory, getExecPathRelativeToPackage(manifest)));
+        var appPath = join(destination, getExecPathRelativeToPackage(manifest));
+        cb(null, appPath);
       })
-     }
-  };
-  pUnpack.linux64 = pUnpack.linux32;
 
-
-
-  var pRun = {
-    /**
-     * @private
-     */
-    mac: function(appPath, args, options){
-      //spawn
-      if(args && args.length) {
-        args = [appPath].concat('--args', args);
-      } else {
-        args = [appPath];
-      }
-      return run('open', args, options);
-    },
-    /**
-     * @private
-     */
-    win: function(appPath, args, options, cb){
-      return run(appPath, args, options, cb);
-    },
-    /**
-     * @private
-     */
-    linux32: function(appPath, args, options, cb){
-      var appExec = join(appPath, basename(this.getAppExec()));
-      chmodSync(appExec, '0o755')
-      if(!options) options = {};
-      options.cwd = appPath;
-      return run(appPath + "/"+basename(this.getAppExec()), args, options, cb);
     }
-  };
+    else if (extension === ".dmg") {
+      // just in case if something was wrong during previous mount
+      exec('hdiutil unmount /Volumes/' + basename(filename, '.dmg'), function (err) {
+        // create a CDR from the DMG to bypass any steps which require user interaction
+        var cdrPath = filename.replace(/.dmg$/, '.cdr');
+        exec('hdiutil convert "' + filename + '" -format UDTO -o "' + cdrPath + '"', function (err) {
+          exec('hdiutil attach "' + cdrPath + '" -nobrowse', function (err) {
+            if (err) {
+              if (err.code == 1) {
+                pUnpack.mac.apply(this, args);
+              }
+              return cb(err);
+            }
+            findMountPoint(basename(filename, '.dmg'), cb);
+          });
+        });
+      });
 
-  pRun.linux64 = pRun.linux32;
-
+      function findMountPoint(dmg_name, callback) {
+        exec('hdiutil info', function (err, stdout) {
+          if (err) return callback(err);
+          var results = stdout.split("\n");
+          var dmgExp = new RegExp(dmg_name + '$');
+          for (var i = 0, l = results.length; i < l; i++) {
+            if (results[i].match(dmgExp)) {
+              var mountPoint = results[i].split("\t").pop();
+              var fileToRun = join(mountPoint, dmg_name + ".app");
+              return callback(null, fileToRun);
+            }
+          }
+          callback(Error("Mount point not found"));
+        })
+      }
+    }
+  },
   /**
    * @private
    */
-  function run(path, args, options){
-    var opts = {
-      detached: true
-    };
-    for(var key in options){
-      opts[key] = options[key];
-    }
-    var sp = spawn(path, args, opts);
-    sp.unref();
-    return sp;
-  }
+  win: function (filename, cb, manifest, temporaryDirectory) {
+    var destinationDirectory = getZipDestinationDirectory(filename, temporaryDirectory),
+      unzip = function () {
+        // unzip by C. Spieler (docs: https://www.mkssoftware.com/docs/man1/unzip.1.asp, issues: http://www.info-zip.org/)
+        exec('"' + resolve(__dirname, 'tools/unzip.exe') + '" -u -o "' +
+          filename + '" -d "' + destinationDirectory + '" > NUL', function (err) {
+            if (err) {
+              return cb(err);
+            }
 
-  var pInstall = {
-    /**
-     * @private
-     */
-    mac: function(to, cb){
-      ncp(this.getAppPath(), to, cb);
-    },
-    /**
-     * @private
-     */
-    win: function(to, cb){
-      var self = this;
-      var errCounter = 50;
-      deleteApp(appDeleted);
+            cb(null, join(destinationDirectory, getExecPathRelativeToPackage(manifest)));
+          });
+      };
 
-      function appDeleted(err){
-        if(err){
-          errCounter--;
-          if(errCounter > 0) {
-            setTimeout(function(){
-              deleteApp(appDeleted);
-            }, 100);
-          } else {
-            return cb(err);
+    _exists(destinationDirectory, function (exists) {
+      if (exists) {
+        del(destinationDirectory, { force: true }, function (err) {
+          if (err) {
+            cb(err);
           }
-        }
-        else {
-          ncp(self.getAppPath(), to, appCopied);
-        }
+          else {
+            unzip();
+          }
+        });
       }
-      function deleteApp(cb){
-        del(to + '/**/*', {force: true}, cb);
+      else {
+        unzip();
       }
-      function appCopied(err){
-        if(err){
-          setTimeout(deleteApp, 100, appDeleted);
-          return
-        }
-        cb();
-      }
-    },
-    /**
-     * @private
-     */
-    linux32: function(to, cb){
-      ncp(this.getAppPath(), to, cb);
-    }
-  };
-  pInstall.linux64 = pInstall.linux32;
+    });
 
-  export default updater;
+  },
+  /**
+   * @private
+   */
+  linux32: function (filename, cb, manifest, temporaryDirectory) {
+    //filename fix
+    exec('tar -zxvf "' + filename + '" >/dev/null', { cwd: temporaryDirectory }, function (err) {
+      console.log(arguments);
+      if (err) {
+        console.log(err);
+        return cb(err);
+      }
+      cb(null, join(temporaryDirectory, getExecPathRelativeToPackage(manifest)));
+    })
+  }
+};
+pUnpack.linux64 = pUnpack.linux32;
+
+
+
+var pRun = {
+  /**
+   * @private
+   */
+  mac: function (appPath, args, options) {
+    //spawn
+    if (args && args.length) {
+      args = [appPath].concat('--args', args);
+    } else {
+      args = [appPath];
+    }
+    return run('open', args, options);
+  },
+  /**
+   * @private
+   */
+  win: function (appPath, args, options, cb) {
+    return run(appPath, args, options, cb);
+  },
+  /**
+   * @private
+   */
+  linux32: function (appPath, args, options, cb) {
+    var appExec = join(appPath, basename(this.getAppExec()));
+    chmodSync(appExec, '0o755')
+    if (!options) options = {};
+    options.cwd = appPath;
+    return run(appPath + "/" + basename(this.getAppExec()), args, options, cb);
+  }
+};
+
+pRun.linux64 = pRun.linux32;
+
+/**
+ * @private
+ */
+function run(path, args, options) {
+  var opts = {
+    detached: true
+  };
+  for (var key in options) {
+    opts[key] = options[key];
+  }
+  var sp = spawn(path, args, opts);
+  sp.unref();
+  return sp;
+}
+
+var pInstall = {
+  /**
+   * @private
+   */
+  mac: function (to, cb) {
+    ncp(this.getAppPath(), to, cb);
+  },
+  /**
+   * @private
+   */
+  win: function (to, cb) {
+    var self = this;
+    var errCounter = 50;
+    deleteApp(appDeleted);
+
+    function appDeleted(err) {
+      if (err) {
+        errCounter--;
+        if (errCounter > 0) {
+          setTimeout(function () {
+            deleteApp(appDeleted);
+          }, 100);
+        } else {
+          return cb(err);
+        }
+      }
+      else {
+        ncp(self.getAppPath(), to, appCopied);
+      }
+    }
+    function deleteApp(cb) {
+      del(to + '/**/*', { force: true }, cb);
+    }
+    function appCopied(err) {
+      if (err) {
+        setTimeout(deleteApp, 100, appDeleted);
+        return
+      }
+      cb();
+    }
+  },
+  /**
+   * @private
+   */
+  linux32: function (to, cb) {
+    ncp(this.getAppPath(), to, cb);
+  }
+};
+pInstall.linux64 = pInstall.linux32;
+
+export default updater;
