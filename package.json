@@ -1,12 +1,12 @@
 {
   "name": "@nwutils/updater",
+  "version": "1.0.0-pre.1",
   "description": "Update NW.js applications",
   "keywords": [
     "NW.js",
     "node-webkit",
     "update"
   ],
-  "version": "0.3.5",
   "author": {
     "name": "Eldar Djafarov",
     "url": "https://github.com/edjafarov"
