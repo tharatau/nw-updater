@@ -32,7 +32,6 @@
   },
   "scripts": {
     "grunt": "grunt",
-    "deps": "npm i && cd app && npm i && cd ..",
     "test": "node node_modules/grunt-cli/bin/grunt clean mochaTest",
     "types": "npx -p typescript tsc app/updater.js --declaration --allowJs --emitDeclarationOnly --outFile ./index.d.ts"
   },
