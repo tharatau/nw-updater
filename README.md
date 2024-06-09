@@ -1,12 +1,12 @@
 > This repository is in maintainance mode. Bug fixes will be provided on a best effort basis. If you use this project, please consider contributing back.
 
-# node-webkit-updater
+# @nwutils/updater
 
 [![npm](https://img.shields.io/npm/v/node-webkit-updater.svg?style=flat)](https://www.npmjs.com/package/node-webkit-updater)
-[![Join the chat at https://gitter.im/nwjs/nwjs](https://badges.gitter.im/nwjs/nw-builder.svg)](https://gitter.im/nwjs/nw-builder?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+[![Join the chat at https://gitter.im/nwjs/nwjs](https://badges.gitter.im/nwjs/nwjs.svg)](https://gitter.im/nwjs/nwjs)
 
-```
-npm i -D node-webkit-updater
+```shell
+npm i @nwutils/updater
 ```
 
 It gives you low-level API to:
@@ -33,7 +33,7 @@ Covered by tests and works for [linux](http://screencast.com/t/Je2ptbHhP), [wind
 #### new updater(manifest, options)
 Creates new instance of updater. Manifest could be a `package.json` of project.
 
-Note that compressed apps are assumed to be downloaded in the format produced by [node-webkit-builder](https://github.com/mllrsohn/node-webkit-builder) (or [grunt-node-webkit-builder](https://github.com/mllrsohn/grunt-node-webkit-builder)).
+Note that compressed apps are assumed to be downloaded in the format produced by [nw-builder](https://github.com/nwutils/nw-builder) (or [grunt-nw-builder](https://github.com/nwjs/grunt-nw-builder)).
 
 **Params**
 

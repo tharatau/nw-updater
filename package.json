@@ -1,5 +1,5 @@
 {
-  "name": "node-webkit-updater",
+  "name": "@nwutils/updater",
   "description": "Update NW.js applications",
   "keywords": [
     "NW.js",
@@ -19,7 +19,7 @@
   ],
   "contributors": [
     {
-      "name": "The nw-updater Authors",
+      "name": "The @nwutils/updater Authors",
       "url": "https://github.com/nwutils/nw-updater/graphs/contributors"
     }
   ],
@@ -37,7 +37,7 @@
   },
   "scripts": {
     "grunt": "grunt",
-    "test": "node node_modules/grunt-cli/bin/grunt clean mochaTest",
+    "test": "grunt clean mochaTest",
     "types": "npx -p typescript tsc app/updater.js --declaration --allowJs --emitDeclarationOnly --outFile ./index.d.ts"
   },
   "dependencies": {
@@ -57,7 +57,6 @@
     "grunt-contrib-copy": "^1.0.0",
     "grunt-mocha-test": "^0.13.3",
     "grunt-nw-builder": "^4.7.4",
-    "mocha": "^10.4.0",
-    "nw-builder": "^4.7.4"
+    "mocha": "^10.4.0"
   }
 }
