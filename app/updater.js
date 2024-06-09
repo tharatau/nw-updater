@@ -75,13 +75,13 @@ class updater {
   }
 
   /**
-     * Downloads the new app to a temorary folder.
-     * 
-     * @async
-     * @method
-     * @param {Manifest} newManifest - see [manifest schema](https://github.com/nwutils/nw-updater?tab=readme-ov-file#manifest-schema) below
-     * @returns {Promise.<void>}
-     */
+   * Downloads the new app to a temorary folder.
+   * 
+   * @async
+   * @method
+   * @param {Manifest} newManifest - see [manifest schema](https://github.com/nwutils/nw-updater?tab=readme-ov-file#manifest-schema) below
+   * @returns {Promise.<void>}
+   */
   async download(newManifest) {
     const manifest = newManifest ?? this.manifest;
     const url = manifest.packages[platform].url;

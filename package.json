@@ -54,6 +54,7 @@
     "grunt-jsdoc-to-markdown": "^6.0.0",
     "grunt-mocha-test": "^0.13.3",
     "grunt-nw-builder": "^4.7.4",
-    "mocha": "^10.4.0"
+    "mocha": "^10.4.0",
+    "nw-builder": "^4.7.4"
   }
 }

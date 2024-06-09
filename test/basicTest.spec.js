@@ -125,7 +125,7 @@ describe("build app", function () {
   });
 
   it('should be updated, with new version', function (done) {
-    var os = {
+    let os = {
       mac: {
         dir: 'osx/',
         run: 'open ' + __dirname + "/deploy0.1/updapp/osx/updapp.app"
