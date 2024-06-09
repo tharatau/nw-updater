@@ -21,7 +21,7 @@
   //updater will copy itself to origin directory
   //updater will run app
   var pkg = require('./package.json');
-  var request = require('request');
+  var axios = require('axios');
   var url = require('url');
   var path = require('path');
   var os = require('os');
@@ -37,7 +37,7 @@
   
   
   if(!copyPath){
-    request.get(url.resolve(pkg.manifestUrl, '/version/'+ pkg.version));
+    axios.get(url.resolve(pkg.manifestUrl, '/version/'+ pkg.version));
     document.getElementById('version').innerHTML = 'current version ' + pkg.version;
     newVersionCheckIntervalId = setInterval(function(){
       if(!d && !tryingForNewVersion) {

@@ -50,11 +50,9 @@
     "grunt-contrib-clean": "^2.0.1",
     "grunt-contrib-compress": "^2.0.0",
     "grunt-contrib-copy": "^1.0.0",
-    "grunt-jsdoc-to-markdown": "^6.0.0",
     "grunt-mocha-test": "^0.13.3",
     "grunt-nw-builder": "^4.7.4",
     "mocha": "^10.4.0",
-    "nw-builder": "^4.7.4",
-    "request": "^2.64.0"
+    "nw-builder": "^4.7.4"
   }
 }
