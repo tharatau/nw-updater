@@ -6,7 +6,7 @@
     "node-webkit",
     "update"
   ],
-  "version": "0.3.4",
+  "version": "0.3.5",
   "author": {
     "name": "Eldar Djafarov",
     "url": "https://github.com/edjafarov"
@@ -25,6 +25,11 @@
   ],
   "main": "./app/updater.js",
   "types": "./index.d.ts",
+  "files": [
+    "index.d.ts",
+    "LICENSE",
+    "app/updater.js"
+  ],
   "homepage": "https://github.com/nwutils/nw-updater",
   "repository": {
     "type": "git",
