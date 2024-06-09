@@ -4,20 +4,14 @@
   "description": "",
   "author": "Eldar Djafarov <djkojb@gmail.com>",
   "license": "MIT",
-  "manifestUrl": "https://raw.githubusercontent.com/openconf/updater/master/package.json",
+  "manifestUrl": "https://raw.githubusercontent.com/nwutils/nw-updater/main/package.json",
   "packages": {
     "mac": {
-      "url": "https://github.com/openconf/updater/blob/master/deploy/releases/updapp/mac/updapp.dmg?raw=true"
+      "url": "https://github.com/nwutils/nw-updater/archive/refs/tags/0.2.1.tar.gz"
     }
   },
   "window": {
     "toolbar": true
   },
-  "main": "app://updapp/index.html",
-  "dependencies": {
-    "ncp": "^2.0.0",
-    "request": "^2.36.0",
-    "del": "^7.1.0",
-    "semver": "^7.6.2"
-  }
+  "main": "app://updapp/index.html"
 }

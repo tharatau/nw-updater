@@ -1,19 +1,9 @@
 version: 2
 updates:
   - package-ecosystem: "npm"
-    directory: "./app"
-    schedule:
-      interval: "weekly"
-      day: "saturday"
-    groups:
-      npm:
-        patterns:
-          - "*"
-  - package-ecosystem: "npm"
     directory: "."
     schedule:
-      interval: "weekly"
-      day: "saturday"
+      interval: "daily"
     groups:
       npm:
         patterns:
@@ -21,8 +11,7 @@ updates:
   - package-ecosystem: "github-actions"
     directory: ".github/"
     schedule:
-      interval: "weekly"
-      day: "saturday"
+      interval: "daily"
     groups:
       gha:
         patterns:

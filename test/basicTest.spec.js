@@ -1,6 +1,5 @@
 const { cp } = require('node:fs/promises');
 var ncp = require('ncp');
-var expect = require('chai').expect;
 var spawn = require('child_process').spawn;
 var exec = require('child_process').exec;
 var express = require('express');
@@ -12,9 +11,11 @@ var fs = require('fs');
 var getPort = undefined;
 var port = null;
 var app;
+var expect;
 
 (async function () {
   try {
+    expect = (await import('chai')).expect;
     getPort = (await import('get-port')).default;
   } catch (e) {
     console.log(e);
@@ -124,7 +125,7 @@ describe("build app", function () {
   });
 
   it('should be updated, with new version', function (done) {
-    var os = {
+    let os = {
       mac: {
         dir: 'osx/',
         run: 'open ' + __dirname + "/deploy0.1/updapp/osx/updapp.app"

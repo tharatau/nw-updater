@@ -9,39 +9,36 @@
   "version": "0.3.3",
   "author": {
     "name": "Eldar Djafarov",
-    "email": "djkojb@gmail.com",
     "url": "https://github.com/edjafarov"
   },
   "maintainers": [
     {
       "name": "Ayushman Chhabra",
-      "email": "info@ayushmanchhabra.com",
       "url": "https://ayushmanchhabra.com/"
     }
   ],
   "contributors": [
     {
       "name": "The nw-updater Authors",
-      "url": "https://github.com/tharatau/nw-updater/graphs/contributors"
+      "url": "https://github.com/nwutils/nw-updater/graphs/contributors"
     }
   ],
   "main": "./app/updater.js",
+  "types": "./index.d.ts",
+  "homepage": "https://github.com/nwutils/nw-updater",
   "repository": {
     "type": "git",
-    "url": "https://github.com/tharatau/nw-updater.git"
+    "url": "https://github.com/nwutils/nw-updater.git"
   },
-  "bugs": {
-    "url": "https://github.com/tharatau/nw-updater/issues"
-  },
-  "homepage": "https://github.com/tharatau/nw-updater",
   "scripts": {
-    "deps": "npm i && cd app && npm i && cd ..",
-    "test": "node node_modules/grunt-cli/bin/grunt clean mochaTest"
+    "grunt": "grunt",
+    "test": "node node_modules/grunt-cli/bin/grunt clean mochaTest",
+    "types": "npx -p typescript tsc app/updater.js --declaration --allowJs --emitDeclarationOnly --outFile ./index.d.ts"
   },
   "dependencies": {
-    "ncp": "^2.0.0",
-    "request": "^2.64.0",
+    "axios": "^1.7.2",
     "del": "^7.1.0",
+    "ncp": "^2.0.0",
     "semver": "^7.6.2"
   },
   "devDependencies": {
@@ -56,6 +53,8 @@
     "grunt-jsdoc-to-markdown": "^6.0.0",
     "grunt-mocha-test": "^0.13.3",
     "grunt-nw-builder": "^4.7.4",
-    "mocha": "^10.4.0"
+    "mocha": "^10.4.0",
+    "nw-builder": "^4.7.4",
+    "request": "^2.64.0"
   }
 }
