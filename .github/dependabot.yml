@@ -1,14 +1,6 @@
 version: 2
 updates:
   - package-ecosystem: "npm"
-    directory: "./app"
-    schedule:
-      interval: "daily"
-    groups:
-      npm:
-        patterns:
-          - "*"
-  - package-ecosystem: "npm"
     directory: "."
     schedule:
       interval: "daily"

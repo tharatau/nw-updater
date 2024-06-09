@@ -39,7 +39,6 @@
     "axios": "^1.7.2",
     "del": "^7.1.0",
     "ncp": "^2.0.0",
-    "request": "^2.64.0",
     "semver": "^7.6.2"
   },
   "devDependencies": {
@@ -55,6 +54,7 @@
     "grunt-mocha-test": "^0.13.3",
     "grunt-nw-builder": "^4.7.4",
     "mocha": "^10.4.0",
-    "nw-builder": "^4.7.4"
+    "nw-builder": "^4.7.4",
+    "request": "^2.64.0"
   }
 }

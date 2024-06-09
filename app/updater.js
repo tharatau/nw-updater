@@ -1,15 +1,13 @@
-import { exec, spawn } from 'node:child_process';
+import child_process from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import process from 'node:process';
 
+import del from 'del';
+import ncp from 'ncp';
 import semver from 'semver';
 
-import { basename, join, dirname, extname, resolve } from 'path';
-import { existsSync, mkdirSync, exists as _exists, chmodSync } from 'fs';
-import ncp from 'ncp';
-import del from 'del';
 
 let platform = process.platform;
 platform = /^win/.test(platform) ? 'win' : /^darwin/.test(platform) ? 'mac' : 'linux' + (process.arch == 'ia32' ? '32' : '64');
@@ -169,7 +167,7 @@ class updater {
      */
   run(execPath, args, options) {
     var arg = arguments;
-    if (platform.indexOf('linux') === 0) arg[0] = dirname(arg[0]);
+    if (platform.indexOf('linux') === 0) arg[0] = path.dirname(arg[0]);
     pRun[platform].apply(this, arg);
   }
 }
@@ -181,7 +179,7 @@ class updater {
  * @return {string}
  */
 var getZipDestinationDirectory = function (zipPath, temporaryDirectory) {
-  return join(temporaryDirectory, basename(zipPath, extname(zipPath)));
+  return path.join(temporaryDirectory, path.basename(zipPath, path.extname(zipPath)));
 },
 
   /**
@@ -211,51 +209,51 @@ var pUnpack = {
    */
   mac: function (filename, cb, manifest, temporaryDirectory) {
     var args = arguments,
-      extension = extname(filename),
-      destination = join(temporaryDirectory, basename(filename, extension));
+      extension = path.extname(filename),
+      destination = path.join(temporaryDirectory, path.basename(filename, extension));
 
-    if (!existsSync(destination)) {
-      mkdirSync(destination);
+    if (!fs.existsSync(destination)) {
+      fs.mkdirSync(destination);
     }
 
     if (extension === ".zip") {
-      exec('unzip -xo "' + filename + '" >/dev/null', { cwd: destination }, function (err) {
+      child_process.exec('unzip -xo "' + filename + '" >/dev/null', { cwd: destination }, function (err) {
         if (err) {
           console.log(err);
           return cb(err);
         }
-        var appPath = join(destination, getExecPathRelativeToPackage(manifest));
+        var appPath = path.join(destination, getExecPathRelativeToPackage(manifest));
         cb(null, appPath);
       })
 
     }
     else if (extension === ".dmg") {
       // just in case if something was wrong during previous mount
-      exec('hdiutil unmount /Volumes/' + basename(filename, '.dmg'), function (err) {
+      child_process.exec('hdiutil unmount /Volumes/' + path.basename(filename, '.dmg'), function (err) {
         // create a CDR from the DMG to bypass any steps which require user interaction
         var cdrPath = filename.replace(/.dmg$/, '.cdr');
-        exec('hdiutil convert "' + filename + '" -format UDTO -o "' + cdrPath + '"', function (err) {
-          exec('hdiutil attach "' + cdrPath + '" -nobrowse', function (err) {
+        child_process.exec('hdiutil convert "' + filename + '" -format UDTO -o "' + cdrPath + '"', function (err) {
+          child_process.exec('hdiutil attach "' + cdrPath + '" -nobrowse', function (err) {
             if (err) {
               if (err.code == 1) {
                 pUnpack.mac.apply(this, args);
               }
               return cb(err);
             }
-            findMountPoint(basename(filename, '.dmg'), cb);
+            findMountPoint(path.basename(filename, '.dmg'), cb);
           });
         });
       });
 
       function findMountPoint(dmg_name, callback) {
-        exec('hdiutil info', function (err, stdout) {
+        child_process.exec('hdiutil info', function (err, stdout) {
           if (err) return callback(err);
           var results = stdout.split("\n");
           var dmgExp = new RegExp(dmg_name + '$');
           for (var i = 0, l = results.length; i < l; i++) {
             if (results[i].match(dmgExp)) {
               var mountPoint = results[i].split("\t").pop();
-              var fileToRun = join(mountPoint, dmg_name + ".app");
+              var fileToRun = path.join(mountPoint, dmg_name + ".app");
               return callback(null, fileToRun);
             }
           }
@@ -271,18 +269,18 @@ var pUnpack = {
     var destinationDirectory = getZipDestinationDirectory(filename, temporaryDirectory),
       unzip = function () {
         // unzip by C. Spieler (docs: https://www.mkssoftware.com/docs/man1/unzip.1.asp, issues: http://www.info-zip.org/)
-        exec('"' + resolve(__dirname, 'tools/unzip.exe') + '" -u -o "' +
+        child_process.exec('"' + path.resolve(__dirname, 'tools/unzip.exe') + '" -u -o "' +
           filename + '" -d "' + destinationDirectory + '" > NUL', function (err) {
             if (err) {
               return cb(err);
             }
 
-            cb(null, join(destinationDirectory, getExecPathRelativeToPackage(manifest)));
+            cb(null, path.join(destinationDirectory, getExecPathRelativeToPackage(manifest)));
           });
       };
 
-    _exists(destinationDirectory, function (exists) {
-      if (exists) {
+    fs.stat(destinationDirectory, function (err, _) {
+      if (!err) {
         del(destinationDirectory, { force: true }, function (err) {
           if (err) {
             cb(err);
@@ -303,13 +301,13 @@ var pUnpack = {
    */
   linux32: function (filename, cb, manifest, temporaryDirectory) {
     //filename fix
-    exec('tar -zxvf "' + filename + '" >/dev/null', { cwd: temporaryDirectory }, function (err) {
+    child_process.exec('tar -zxvf "' + filename + '" >/dev/null', { cwd: temporaryDirectory }, function (err) {
       console.log(arguments);
       if (err) {
         console.log(err);
         return cb(err);
       }
-      cb(null, join(temporaryDirectory, getExecPathRelativeToPackage(manifest)));
+      cb(null, path.join(temporaryDirectory, getExecPathRelativeToPackage(manifest)));
     })
   }
 };
@@ -340,11 +338,11 @@ var pRun = {
    * @private
    */
   linux32: function (appPath, args, options, cb) {
-    var appExec = join(appPath, basename(this.getAppExec()));
-    chmodSync(appExec, '0o755')
+    var appExec = path.join(appPath, path.basename(this.getAppExec()));
+    fs.chmodSync(appExec, '0o755')
     if (!options) options = {};
     options.cwd = appPath;
-    return run(appPath + "/" + basename(this.getAppExec()), args, options, cb);
+    return run(appPath + "/" + path.basename(this.getAppExec()), args, options, cb);
   }
 };
 
@@ -360,7 +358,7 @@ function run(path, args, options) {
   for (var key in options) {
     opts[key] = options[key];
   }
-  var sp = spawn(path, args, opts);
+  var sp = child_process.spawn(path, args, opts);
   sp.unref();
   return sp;
 }

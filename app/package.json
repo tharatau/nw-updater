@@ -13,11 +13,5 @@
   "window": {
     "toolbar": true
   },
-  "main": "app://updapp/index.html",
-  "dependencies": {
-    "ncp": "^2.0.0",
-    "request": "^2.36.0",
-    "del": "^7.1.0",
-    "semver": "^7.6.2"
-  }
+  "main": "app://updapp/index.html"
 }
