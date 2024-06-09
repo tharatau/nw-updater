@@ -97,21 +97,25 @@ declare module "updater" {
          */
         checkNewVersion(): Promise<boolean>;
         /**
-           * Downloads the new app to a template folder
-           * @param  {Function} cb - called when download completes. Callback arguments: error, downloaded filepath
-           * @param  {Manifest} newManifest - see [manifest schema](#manifest-schema) below
-           * @return {Request} Request - stream, the stream contains `manifest` property with new manifest and 'content-length' property with the size of package.
-           */
-        download(cb: Function, newManifest: Manifest): Request;
+         * Downloads the new app to a temorary folder.
+         *
+         * @async
+         * @method
+         * @param {Manifest} newManifest - see [manifest schema](https://github.com/nwutils/nw-updater?tab=readme-ov-file#manifest-schema) below
+         * @returns {Promise.<void>}
+         */
+        download(newManifest: Manifest): Promise<void>;
         /**
-           * Returns executed application path
-           * @returns {string}
-           */
+         * Returns executed application path.
+         *
+         * @returns {string}
+         */
         getAppPath(): string;
         /**
-           * Returns current application executable
-           * @returns {string}
-           */
+         * Returns current application executable.
+         *
+         * @returns {string}
+         */
         getAppExec(): string;
         /**
            * Will unpack the `filename` in temporary folder.
